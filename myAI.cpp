@@ -9,19 +9,10 @@
 using namespace std;
 
 int player;
-const array<Point, 8> directions {
-    Point(-1, -1), Point(-1, 0), Point(-1, 1),
-    Point(0, -1), Point(0, 1),
-    Point(1, -1), Point(1, 0), Point(1, 1)
-};
-const array<Point, 4> corner {
-    Point(0, 0), Point(0, 7),
-    Point(7, 0), Point(7, 7)
-};
 struct Point {
     int x, y;
-    Point() : Point(0, 0);
-    Point(float x, float y) : x{x}, y{y} {}
+    Point() : Point(0, 0){}
+    Point(int x, int y) : x{x}, y{y} {}
     bool operator==(const Point& p) const {
 		return (x == p.x && y == p.y);
 	}
@@ -35,11 +26,21 @@ struct Point {
 		return Point(x - p.x, y - p.y);
 	}
 };
+const array<Point, 8> directions {{
+    Point(-1, -1), Point(-1, 0), Point(-1, 1),
+    Point(0, -1), Point(0, 1),
+    Point(1, -1), Point(1, 0), Point(1, 1)
+}};
+const array<Point, 4> corner {{
+    Point(0, 0), Point(0, 7),
+    Point(7, 0), Point(7, 7)
+}};
 array<array<int, SIZE>, SIZE> board;
 vector<Point> next_valid_points;
 
 class State {
 private:
+    array<array<int, SIZE>, SIZE> Board;
     int coin_heuristic;
     int mobil_heuristic;
     int corner_heuristic;
@@ -47,6 +48,9 @@ public:
     State(): coin_heuristic{0}, mobil_heuristic{0}, corner_heuristic{0} {}
     State(const State& S): coin_heuristic{S.coin_heuristic}, mobil_heuristic{S.mobil_heuristic}, 
                             corner_heuristic{S.corner_heuristic} {}
+    State(const array<array<int, SIZE>, SIZE>& board) {
+        Board = board;
+    }
     int cal_ratio(const int& my, const int& oppo) {
         return (my - oppo) / (my + oppo);
     }
@@ -99,7 +103,7 @@ public:
                 oppo_corner++;
         }
         corner_heuristic = 100 * cal_ratio(my_corner, oppo_corner);
-        
+        // Stability.
     }
 };
 void read_board(ifstream& fin) {
@@ -122,10 +126,11 @@ void read_valid_points(ifstream& fin) {
 
 void write_valid_point(ofstream& fout) {
     int n_valid_points = next_valid_points.size();
-    int idx;
-    Point p = next_valid_points[idx];
-    fout << p.x << " " << p.y << endl;
-    fout.flush();
+    int alpha = -10000000;
+    for(int i = 0; i < n_valid_points; i++) {
+        State next(board);
+        
+    }
 }
 
 int main(int, char **argv) {
