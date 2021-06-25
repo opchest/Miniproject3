@@ -47,7 +47,9 @@ private:
 public:
     State(): coin_heuristic{0}, mobil_heuristic{0}, corner_heuristic{0} {}
     State(const State& S): coin_heuristic{S.coin_heuristic}, mobil_heuristic{S.mobil_heuristic}, 
-                            corner_heuristic{S.corner_heuristic} {}
+                            corner_heuristic{S.corner_heuristic} {
+                                Board = S.Board;
+                            }
     State(const array<array<int, SIZE>, SIZE>& board) :coin_heuristic{0}, mobil_heuristic{0}, corner_heuristic{0} {
         Board = board;
     }
@@ -75,6 +77,19 @@ public:
             }
         }
         return false;
+    }
+    vector<Point> get_valid_points(int who) const {
+        vector<Point> valid_points;
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                Point p = Point(i, j);
+                if(Board[i][j] != 0)
+                    continue;
+                if(is_point_valid(p, who))
+                    valid_points.push_back(p);
+            }
+        }
+        return valid_points;
     }
     int Cal_heuristic() {
         int my_coins = 0, oppo_coins = 0;
@@ -107,22 +122,22 @@ public:
         }
         corner_heuristic = 100 * cal_ratio(my_corner, oppo_corner);
 
-        return (coin_heuristic + mobil_heuristic + corner_heuristic);
+        return (coin_heuristic + 3 * mobil_heuristic + 10 * corner_heuristic);
         // Stability.
     }
-    void flip_coins(Point center) {
+    void flip_coins(Point center, int who) {
         for(Point d : directions) {
             Point p = center + d;
-            if(!is_point_inside(p) || Board[p.x][p.y] != 3 - player)
+            if(!is_point_inside(p) || Board[p.x][p.y] != 3 - who)
                 continue;
             vector<Point> coins({p});
             p = p + d;
             while(is_point_inside(p) && Board[p.x][p.y] != 0) {
-                if(Board[p.x][p.y] == player) {
+                if(Board[p.x][p.y] == who) {
                     for(Point e : coins) {
-                        Board[e.x][e.y] = player;
+                        Board[e.x][e.y] = who;
                     } 
-                    Board[center.x][center.y] = player;
+                    Board[center.x][center.y] = who;
                     break;
                 }   
                 coins.push_back(p);
@@ -148,23 +163,53 @@ void read_valid_points(ifstream& fin) {
         next_valid_points.push_back({x, y});
     }
 }
+int miniMax(State node, int depth, int Player) {
+    if(depth == 0) 
+        return node.Cal_heuristic();
+    if(Player == player) {
+        int best_h = -1000000;
+        vector<Point> valid_points = node.get_valid_points(Player);
+        int points_number = valid_points.size();
+        for(int i = 0; i < points_number; i++) {
+            State next = node;
+            Point p = valid_points[i];
+            next.flip_coins(p, Player);
+            int next_h = miniMax(next, depth - 1, 3 - Player);
+            best_h = max(best_h, next_h);
+        }
+        return best_h;
+    }
+    else {
+        int best_h = 1000000;
+        vector<Point> valid_points = node.get_valid_points(Player);
+        int points_number = valid_points.size();
+        for(int i = 0; i < points_number; i++) {
+            State next = node;
+            Point p = valid_points[i];
+            next.flip_coins(p, Player);
+            int next_h = miniMax(next, depth - 1, 3 - Player);
+            best_h = min(best_h, next_h);
+        }
+        return best_h;
 
+    }
+}
 void write_valid_point(ofstream& fout) {
+    State cur(board);
     int n_valid_points = next_valid_points.size();
-    int alpha = -10000000;
+    int best_heuristic = -10000000;
     for(int i = 0; i < n_valid_points; i++) {
+        State next = cur;
         Point p = next_valid_points[i];
-        State next(board);
-        next.flip_coins(p);
-        int h = next.Cal_heuristic();
-        if(h > alpha) {
-            alpha = h;
+        next.flip_coins(p, player);
+        int h = miniMax(next, 4, 3 - player);
+        if(h >= best_heuristic) {
+            best_heuristic = h;
             fout << p.x << " " << p.y << endl;
             fout.flush();
         }
     }
 }
-
 int main(int, char **argv) {
     ifstream fin(argv[1]);
     ofstream fout(argv[2]);
