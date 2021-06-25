@@ -48,38 +48,41 @@ public:
     State(): coin_heuristic{0}, mobil_heuristic{0}, corner_heuristic{0} {}
     State(const State& S): coin_heuristic{S.coin_heuristic}, mobil_heuristic{S.mobil_heuristic}, 
                             corner_heuristic{S.corner_heuristic} {}
-    State(const array<array<int, SIZE>, SIZE>& board) {
+    State(const array<array<int, SIZE>, SIZE>& board) :coin_heuristic{0}, mobil_heuristic{0}, corner_heuristic{0} {
         Board = board;
     }
     int cal_ratio(const int& my, const int& oppo) {
-        return (my - oppo) / (my + oppo);
+        if(my + oppo != 0)
+            return (my - oppo) / (my + oppo);
+        else 
+            return 0;
     }
     bool is_point_inside(Point p) const {
         return (0 <= p.x && p.x < SIZE && 0 <=p.y && p.y < SIZE);
     }
     bool is_point_valid(Point center, int who) const {
-        if(board[center.x][center.y] != 0)
+        if(Board[center.x][center.y] != 0)
             return false;
         for(Point d : directions) {
             Point p = center + d;
-            if(!is_point_inside(p) || board[p.x][p.y] == who)
+            if(!is_point_inside(p) || Board[p.x][p.y] != 3 - who)
                 continue;
             p = p + d;
-            while(is_point_inside(p) && board[p.x][p.y] != 0) {
-                if(board[p.x][p.y] == who) 
+            while(is_point_inside(p) && Board[p.x][p.y] != 0) {
+                if(Board[p.x][p.y] == who) 
                     return true;
                 p = p + d;
             }
         }
         return false;
     }
-    void Cal_heuristic() {
+    int Cal_heuristic() {
         int my_coins = 0, oppo_coins = 0;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
-                if(board[i][j] == player) 
+                if(Board[i][j] == player) 
                     my_coins++;
-                else if(board[i][j] == 3 - player)
+                else if(Board[i][j] == 3 - player)
                     oppo_coins++;
             }
         }
@@ -97,13 +100,35 @@ public:
         mobil_heuristic = 100 * cal_ratio(my_mobil, oppo_mobil);
         int my_corner = 0, oppo_corner = 0;
         for(Point i : corner) {
-            if(board[i.x][i.y] == player)
+            if(Board[i.x][i.y] == player)
                 my_corner++;
-            if(board[i.x][i.y] == 3 - player)
+            if(Board[i.x][i.y] == 3 - player)
                 oppo_corner++;
         }
         corner_heuristic = 100 * cal_ratio(my_corner, oppo_corner);
+
+        return (coin_heuristic + mobil_heuristic + corner_heuristic);
         // Stability.
+    }
+    void flip_coins(Point center) {
+        for(Point d : directions) {
+            Point p = center + d;
+            if(!is_point_inside(p) || Board[p.x][p.y] != 3 - player)
+                continue;
+            vector<Point> coins({p});
+            p = p + d;
+            while(is_point_inside(p) && Board[p.x][p.y] != 0) {
+                if(Board[p.x][p.y] == player) {
+                    for(Point e : coins) {
+                        Board[e.x][e.y] = player;
+                    } 
+                    Board[center.x][center.y] = player;
+                    break;
+                }   
+                coins.push_back(p);
+                p = p + d;
+            }
+        }
     }
 };
 void read_board(ifstream& fin) {
@@ -128,8 +153,15 @@ void write_valid_point(ofstream& fout) {
     int n_valid_points = next_valid_points.size();
     int alpha = -10000000;
     for(int i = 0; i < n_valid_points; i++) {
+        Point p = next_valid_points[i];
         State next(board);
-        
+        next.flip_coins(p);
+        int h = next.Cal_heuristic();
+        if(h > alpha) {
+            alpha = h;
+            fout << p.x << " " << p.y << endl;
+            fout.flush();
+        }
     }
 }
 
