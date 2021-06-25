@@ -122,7 +122,7 @@ public:
         }
         corner_heuristic = 100 * cal_ratio(my_corner, oppo_corner);
 
-        return (coin_heuristic + 3 * mobil_heuristic + 10 * corner_heuristic);
+        return (coin_heuristic + 3 * mobil_heuristic + 5 * corner_heuristic);
         // Stability.
     }
     void flip_coins(Point center, int who) {
@@ -191,7 +191,6 @@ int miniMax(State node, int depth, int Player) {
             best_h = min(best_h, next_h);
         }
         return best_h;
-
     }
 }
 void write_valid_point(ofstream& fout) {
@@ -203,7 +202,7 @@ void write_valid_point(ofstream& fout) {
         Point p = next_valid_points[i];
         next.flip_coins(p, player);
         int h = miniMax(next, 4, 3 - player);
-        if(h >= best_heuristic) {
+        if(h > best_heuristic) {
             best_heuristic = h;
             fout << p.x << " " << p.y << endl;
             fout.flush();
