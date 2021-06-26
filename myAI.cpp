@@ -44,17 +44,22 @@ private:
     int coin_heuristic;
     int mobil_heuristic;
     int corner_heuristic;
+    int edge_heuristic;
+    int stable_heuristic;
 public:
-    State(): coin_heuristic{0}, mobil_heuristic{0}, corner_heuristic{0} {}
+    State(): coin_heuristic{0}, mobil_heuristic{0}, corner_heuristic{0}, edge_heuristic{0},
+             stable_heuristic{0} {}
     State(const State& S): coin_heuristic{S.coin_heuristic}, mobil_heuristic{S.mobil_heuristic}, 
-                            corner_heuristic{S.corner_heuristic} {
+                            corner_heuristic{S.corner_heuristic}, edge_heuristic{S.edge_heuristic},
+                            stable_heuristic{S.stable_heuristic}
+                            {
                                 Board = S.Board;
                             }
     State(const array<array<int, SIZE>, SIZE>& board) :coin_heuristic{0}, mobil_heuristic{0}, corner_heuristic{0} {
         Board = board;
     }
     int cal_ratio(const int& my, const int& oppo) {
-        if(my + oppo != 0)
+        if((my + oppo) != 0)
             return (my - oppo) / (my + oppo);
         else 
             return 0;
@@ -91,6 +96,21 @@ public:
         }
         return valid_points;
     }
+    bool is_point_stable(Point center, int who) {
+        for(Point d : directions) {
+            Point p = center + d;
+            if(!is_point_inside(p) || Board[p.x][p.y] != who)
+                continue;
+            while(Board[p.x][p.y] == who && is_point_inside(p)) {
+                for(Point c : corner) {
+                    if(p == c)
+                        return true;
+                } 
+                p = p + d;
+            }
+        }
+        return false;
+    }
     int Cal_heuristic() {
         int my_coins = 0, oppo_coins = 0;
         for(int i = 0; i < SIZE; i++) {
@@ -112,7 +132,7 @@ public:
                     oppo_mobil++;
             }
         }
-        mobil_heuristic = 100 * cal_ratio(my_mobil, oppo_mobil);
+        mobil_heuristic = 1000 * cal_ratio(my_mobil, oppo_mobil);
         int my_corner = 0, oppo_corner = 0;
         for(Point i : corner) {
             if(Board[i.x][i.y] == player)
@@ -120,10 +140,39 @@ public:
             if(Board[i.x][i.y] == 3 - player)
                 oppo_corner++;
         }
-        corner_heuristic = 100 * cal_ratio(my_corner, oppo_corner);
-
-        return (coin_heuristic + 3 * mobil_heuristic + 5 * corner_heuristic);
-        // Stability.
+        corner_heuristic = 1000 * cal_ratio(my_corner, oppo_corner);
+        int my_edge = 0, oppo_edge = 0;
+        for(int i : {0, 7}) {
+            for(int j = 1; j < SIZE - 1; j++) {
+                if(Board[i][j] == player)
+                    my_edge++;
+                if(Board[i][j] == 3 - player)
+                    oppo_edge++;
+            }
+        }
+        for(int i : {0, 7}) {
+            for(int j = 1; j < 7; j++) {
+                if(Board[j][i] == player)
+                    my_edge++;
+                if(Board[j][i] == 3 - player)
+                    oppo_edge++;
+            }
+        }
+        edge_heuristic = 1000 * cal_ratio(my_edge, oppo_edge);
+        int my_stabil = 0, oppo_stabil = 0;
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                if(Board[i][j] != 0) {
+                    Point p(i, j);
+                    if(is_point_stable(p, player)) 
+                    my_stabil++;
+                    if(is_point_stable(p, 3 - player))
+                        oppo_stabil++;
+                }
+            }
+        }
+        stable_heuristic = 1000 * cal_ratio(my_stabil, oppo_stabil);
+        return (coin_heuristic + 5 * mobil_heuristic +  10 * corner_heuristic +   edge_heuristic +  stable_heuristic);
     }
     void flip_coins(Point center, int who) {
         for(Point d : directions) {
@@ -163,34 +212,34 @@ void read_valid_points(ifstream& fin) {
         next_valid_points.push_back({x, y});
     }
 }
-int miniMax(State node, int depth, int Player) {
+int alpha_beta_prune(State node, int depth, int alpha, int beta, int Player) {
     if(depth == 0) 
         return node.Cal_heuristic();
     if(Player == player) {
-        int best_h = -1000000;
         vector<Point> valid_points = node.get_valid_points(Player);
         int points_number = valid_points.size();
         for(int i = 0; i < points_number; i++) {
             State next = node;
             Point p = valid_points[i];
             next.flip_coins(p, Player);
-            int next_h = miniMax(next, depth - 1, 3 - Player);
-            best_h = max(best_h, next_h);
+            alpha = max(alpha, alpha_beta_prune(next, depth - 1, alpha, beta, 3 - Player));
+            if(beta <= alpha)
+                break;
         }
-        return best_h;
+        return alpha;
     }
     else {
-        int best_h = 1000000;
         vector<Point> valid_points = node.get_valid_points(Player);
         int points_number = valid_points.size();
         for(int i = 0; i < points_number; i++) {
             State next = node;
             Point p = valid_points[i];
             next.flip_coins(p, Player);
-            int next_h = miniMax(next, depth - 1, 3 - Player);
-            best_h = min(best_h, next_h);
+            beta = min(beta, alpha_beta_prune(next, depth - 1, alpha, beta, 3 - Player));
+            if(beta <= alpha)
+                break;
         }
-        return best_h;
+        return beta;
     }
 }
 void write_valid_point(ofstream& fout) {
@@ -201,7 +250,7 @@ void write_valid_point(ofstream& fout) {
         State next = cur;
         Point p = next_valid_points[i];
         next.flip_coins(p, player);
-        int h = miniMax(next, 4, 3 - player);
+        int h = alpha_beta_prune(next, 6, -1000000, 1000000,  3 - player);
         if(h > best_heuristic) {
             best_heuristic = h;
             fout << p.x << " " << p.y << endl;
