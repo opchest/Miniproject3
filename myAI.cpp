@@ -46,12 +46,13 @@ private:
     int corner_heuristic;
     int edge_heuristic;
     int stable_heuristic;
+    int round;
 public:
     State(): coin_heuristic{0}, mobil_heuristic{0}, corner_heuristic{0}, edge_heuristic{0},
-             stable_heuristic{0} {}
+             stable_heuristic{0}, round{0} {}
     State(const State& S): coin_heuristic{S.coin_heuristic}, mobil_heuristic{S.mobil_heuristic}, 
                             corner_heuristic{S.corner_heuristic}, edge_heuristic{S.edge_heuristic},
-                            stable_heuristic{S.stable_heuristic}
+                            stable_heuristic{S.stable_heuristic}, round{S.round}
                             {
                                 Board = S.Board;
                             }
@@ -137,13 +138,16 @@ public:
                     oppo_coins++;
             }
         }
-        coin_heuristic = 250 * cal_ratio(my_coins, oppo_coins);
-        int my_mobil = 0;
+        round = (my_coins + oppo_coins) - 4;
+        coin_heuristic = 500 * cal_ratio(my_coins, oppo_coins);
+        int my_mobil = 0, oppo_mobil = 0;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
-                Point center(i, j);
-                if(is_point_valid(center, player)) 
+                Point p(i, j);
+                if(is_point_valid(p, player))
                     my_mobil++;
+                if(is_point_valid(p,  3 - player))
+                    oppo_mobil++;
             }
         }
         // Potential mobility.
@@ -157,7 +161,7 @@ public:
                     oppo_potential_mobil++;
             }
         }
-        mobil_heuristic = 500 * my_mobil + 500 * cal_ratio(my_potential_mobil, oppo_potential_mobil);
+        mobil_heuristic = 1000 * cal_ratio(my_mobil, oppo_mobil) + 1000 * cal_ratio(my_potential_mobil, oppo_potential_mobil);
         int my_corner = 0, oppo_corner = 0;
         for(Point i : corner) {
             if(Board[i.x][i.y] == player)
@@ -168,7 +172,7 @@ public:
         corner_heuristic = 1000 * cal_ratio(my_corner, oppo_corner);
         int my_edge = 0, oppo_edge = 0;
         for(int i : {0, 7}) {
-            for(int j = 1; j < SIZE - 1; j++) {
+            for(int j = 0; j < SIZE; j++) {
                 if(Board[i][j] == player)
                     my_edge++;
                 if(Board[i][j] == 3 - player)
@@ -176,7 +180,7 @@ public:
             }
         }
         for(int i : {0, 7}) {
-            for(int j = 1; j < SIZE - 1; j++) {
+            for(int j = 0; j < SIZE; j++) {
                 if(Board[j][i] == player)
                     my_edge++;
                 if(Board[j][i] == 3 - player)
@@ -215,7 +219,7 @@ public:
             }
         }
         stable_heuristic = 1000 * cal_ratio(my_stabil, oppo_stabil);
-        return (coin_heuristic + 3 * mobil_heuristic +  5 * corner_heuristic +   edge_heuristic +  stable_heuristic);
+        return ((round * 5) * coin_heuristic +  (60 - round) * 5 * mobil_heuristic +  50 * corner_heuristic +  edge_heuristic + 10 * stable_heuristic);
     }
     void flip_coins(Point center, int who) {
         for(Point d : directions) {
