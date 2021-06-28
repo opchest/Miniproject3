@@ -35,6 +35,12 @@ const array<Point, 4> corner {{
     Point(0, 0), Point(0, 7),
     Point(7, 0), Point(7, 7)
 }};
+const array<Point, 12> danger_zone {{
+    Point(0, 1), Point(1, 1), Point(1, 0),
+    Point(7, 1), Point(6, 1), Point(6, 0), 
+    Point(0, 6), Point(1, 6), Point(1, 7), 
+    Point(7, 6), Point(6, 6), Point(6, 7)
+}};
 array<array<int, SIZE>, SIZE> board;
 vector<Point> next_valid_points;
 
@@ -195,31 +201,55 @@ public:
                 if(Board[i][j] == player) {
                     if(is_point_stable(p, player))
                         my_stabil++;
-                    else 
-                        my_stabil--;
+                    else { 
+                       for(Point d : danger_zone) {
+                           if(p == d) {
+                               my_stabil -= 2;
+                               break;
+                           }
+                       }
+                    }
                 }
                 else if(Board[i][j] == 3 - player) {
                     if(is_point_stable(p, 3 - player))
                         oppo_stabil++;
-                    else 
-                        oppo_stabil--;
+                    else { 
+                       for(Point d : danger_zone) {
+                           if(p == d) {
+                               oppo_stabil -= 2;
+                               break;
+                           }
+                       }
+                    }
                 }
                 if(Board[j][i] == player) {
                     if(is_point_stable(p, player))
                         my_stabil++;
-                    else 
-                        my_stabil--;
+                    else { 
+                       for(Point d : danger_zone) {
+                           if(p == d) {
+                               my_stabil -= 2;
+                               break;
+                           }
+                       }
+                    }
                 }
                 else if(Board[j][i] == 3 - player) {
                     if(is_point_stable(p, 3 - player))
                         oppo_stabil++;
-                    else 
-                        oppo_stabil--;
+                    else { 
+                       for(Point d : danger_zone) {
+                           if(p == d) {
+                               oppo_stabil -= 2;
+                               break;
+                           }
+                       }
+                    }
                 }
             }
         }
         stable_heuristic = 1000 * cal_ratio(my_stabil, oppo_stabil);
-        return ((round * 5) * coin_heuristic +  (60 - round) * 5 * mobil_heuristic +  50 * corner_heuristic +  edge_heuristic + 10 * stable_heuristic);
+        return ((round * 5) * coin_heuristic +  (60 - round) * 5 * mobil_heuristic +  100 * corner_heuristic +  edge_heuristic +  10 * stable_heuristic);
     }
     void flip_coins(Point center, int who) {
         for(Point d : directions) {
@@ -292,12 +322,12 @@ int alpha_beta_prune(State node, int depth, int alpha, int beta, int Player) {
 void write_valid_point(ofstream& fout) {
     State cur(board);
     int n_valid_points = next_valid_points.size();
-    int best_heuristic = -10000000;
+    int best_heuristic = -100000000;
     for(int i = 0; i < n_valid_points; i++) {
         State next = cur;
         Point p = next_valid_points[i];
         next.flip_coins(p, player);
-        int h = alpha_beta_prune(next, 5, -1000000, 1000000,  3 - player);
+        int h = alpha_beta_prune(next, 5, -10000000, 10000000,  3 - player);
         if(h > best_heuristic) {
             best_heuristic = h;
             fout << p.x << " " << p.y << endl;
