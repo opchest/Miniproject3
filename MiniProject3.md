@@ -37,6 +37,11 @@ int my_coins = 0, oppo_coins = 0;
 
 ----
 
+
+
+
+
+
 - Mobility & Potential Mobility:
     - Mobility is the number of valid spots, I don't care which player is to play this round, I count the mobility for both side and then use `cal_ratio` funtcion.
 ```c++
