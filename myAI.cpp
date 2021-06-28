@@ -35,11 +35,11 @@ const array<Point, 4> corner {{
     Point(0, 0), Point(0, 7),
     Point(7, 0), Point(7, 7)
 }};
-const array<Point, 12> danger_zone {{
-    Point(0, 1), Point(1, 1), Point(1, 0),
-    Point(7, 1), Point(6, 1), Point(6, 0), 
+const array<Point, 12> danger_point {{
+    Point(1, 0), Point(1, 1), Point(1, 0),
     Point(0, 6), Point(1, 6), Point(1, 7), 
-    Point(7, 6), Point(6, 6), Point(6, 7)
+    Point(6, 0), Point(6, 1), Point(7, 1), 
+    Point(6, 7), Point(6, 6), Point(7, 6)
 }};
 array<array<int, SIZE>, SIZE> board;
 vector<Point> next_valid_points;
@@ -115,6 +115,13 @@ public:
         }
         return valid_points;
     }
+    bool is_point_danger(Point p) {
+        for(Point d : danger_point) {
+            if(p == d)
+                return true;
+        }
+        return false;
+    }
     bool is_point_stable(Point center, int who) {
         for(Point d : directions) {
             for(Point c : corner) {
@@ -145,7 +152,7 @@ public:
             }
         }
         round = (my_coins + oppo_coins) - 4;
-        coin_heuristic = 500 * cal_ratio(my_coins, oppo_coins);
+        coin_heuristic = 100 * cal_ratio(my_coins, oppo_coins);
         int my_mobil = 0, oppo_mobil = 0;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
@@ -167,7 +174,7 @@ public:
                     oppo_potential_mobil++;
             }
         }
-        mobil_heuristic = 1000 * cal_ratio(my_mobil, oppo_mobil) + 1000 * cal_ratio(my_potential_mobil, oppo_potential_mobil);
+        mobil_heuristic = 100 * cal_ratio(my_mobil, oppo_mobil) + 100 * cal_ratio(my_potential_mobil, oppo_potential_mobil);
         int my_corner = 0, oppo_corner = 0;
         for(Point i : corner) {
             if(Board[i.x][i.y] == player)
@@ -175,81 +182,109 @@ public:
             if(Board[i.x][i.y] == 3 - player)
                 oppo_corner++;
         }
-        corner_heuristic = 1000 * cal_ratio(my_corner, oppo_corner);
+        corner_heuristic = 100 * cal_ratio(my_corner, oppo_corner);
         int my_edge = 0, oppo_edge = 0;
         for(int i : {0, 7}) {
-            for(int j = 0; j < SIZE; j++) {
-                if(Board[i][j] == player)
-                    my_edge++;
-                if(Board[i][j] == 3 - player)
-                    oppo_edge++;
-            }
-        }
-        for(int i : {0, 7}) {
-            for(int j = 0; j < SIZE; j++) {
-                if(Board[j][i] == player)
-                    my_edge++;
-                if(Board[j][i] == 3 - player)
-                    oppo_edge++;
-            }
-        }
-        edge_heuristic = 1000 * cal_ratio(my_edge, oppo_edge);
-        int my_stabil = 0, oppo_stabil = 0;
-        for(int i : {0, 7}) {
-            for(int j = 0; j < SIZE; j++) {
+            for(int j : {2, 3, 4, 5, 6}) {
                 Point p(i, j);
                 if(Board[i][j] == player) {
-                    if(is_point_stable(p, player))
-                        my_stabil++;
-                    else { 
-                       for(Point d : danger_zone) {
-                           if(p == d) {
-                               my_stabil -= 2;
-                               break;
-                           }
-                       }
+                    if(is_point_danger(p)) {
+                        if(is_point_stable(p, player))
+                            my_edge ++;
+                        else 
+                            my_edge -= 3;
+                    }
+                    else {
+                        if(is_point_stable(p, player))
+                            my_edge++;
+                        else 
+                            my_edge--;
                     }
                 }
-                else if(Board[i][j] == 3 - player) {
-                    if(is_point_stable(p, 3 - player))
-                        oppo_stabil++;
-                    else { 
-                       for(Point d : danger_zone) {
-                           if(p == d) {
-                               oppo_stabil -= 2;
-                               break;
-                           }
-                       }
+                if(Board[i][j] == 3 - player) {
+                    if(is_point_danger(p)) {
+                        if(is_point_stable(p, 3 - player))
+                            oppo_edge ++;
+                        else 
+                            oppo_edge -= 3;
                     }
+                    else {
+                        if(is_point_stable(p, 3 - player))
+                            oppo_edge++;
+                        else 
+                            oppo_edge--;
+                    }
+                }
+                    
+            }
+        }
+          for(int i : {0, 7}) {
+            for(int j : {2, 3, 4, 5, 6}) {
+                Point p(i, j);
+                if(Board[j][i] == player) {
+                    if(is_point_danger(p)) {
+                        if(is_point_stable(p, player))
+                            my_edge ++;
+                        else 
+                            my_edge -= 3;
+                    }
+                    else {
+                        if(is_point_stable(p, player))
+                            my_edge++;
+                        else 
+                            my_edge--;
+                    }
+                }
+                if(Board[j][i] == 3 - player) {
+                    if(is_point_danger(p)) {
+                        if(is_point_stable(p, 3 - player))
+                            oppo_edge ++;
+                        else 
+                            oppo_edge -= 3;
+                    }
+                    else {
+                        if(is_point_stable(p, 3 - player))
+                            oppo_edge++;
+                        else 
+                            oppo_edge--;
+                    }
+                }
+                    
+            }
+        }
+        edge_heuristic = 100 * cal_ratio(my_edge, oppo_edge);
+        int my_danger = 0, oppo_danger = 0;
+        for(int i : {1, 6}) {
+            for(int j : {1, 6}) {
+                Point p(i, j);
+                if(Board[i][j] == player) {
+                    if(!is_point_stable(p, player)) 
+                        my_danger -= 2;
+                    else 
+                        my_danger++;
+                }
+                if(Board[i][j] == 3 - player) {
+                    if(!is_point_stable(p, 3 - player))
+                        oppo_danger -= 2;
+                    else
+                        oppo_danger++;
                 }
                 if(Board[j][i] == player) {
-                    if(is_point_stable(p, player))
-                        my_stabil++;
-                    else { 
-                       for(Point d : danger_zone) {
-                           if(p == d) {
-                               my_stabil -= 2;
-                               break;
-                           }
-                       }
-                    }
+                    if(!is_point_stable(p, player)) 
+                        my_danger -= 2;
+                    else 
+                        my_danger++;
                 }
-                else if(Board[j][i] == 3 - player) {
-                    if(is_point_stable(p, 3 - player))
-                        oppo_stabil++;
-                    else { 
-                       for(Point d : danger_zone) {
-                           if(p == d) {
-                               oppo_stabil -= 2;
-                               break;
-                           }
-                       }
-                    }
+                if(Board[j][i] == 3 - player) {
+                    if(!is_point_stable(p, 3 - player))
+                        oppo_danger -= 2;
+                    else
+                        oppo_danger++;
                 }
             }
         }
-        stable_heuristic = 1000 * cal_ratio(my_stabil, oppo_stabil);
-        return ((round * 5) * coin_heuristic +  (60 - round) * 5 * mobil_heuristic +  100 * corner_heuristic +  edge_heuristic +  10 * stable_heuristic);
+        edge_heuristic += 100 * cal_ratio(my_danger, oppo_danger);
+        return ((round * 10) * coin_heuristic + (60 - round) * 10 * mobil_heuristic + 4500 * corner_heuristic + 1500 * edge_heuristic);
     }
     void flip_coins(Point center, int who) {
         for(Point d : directions) {
@@ -322,12 +357,12 @@ int alpha_beta_prune(State node, int depth, int alpha, int beta, int Player) {
 void write_valid_point(ofstream& fout) {
     State cur(board);
     int n_valid_points = next_valid_points.size();
-    int best_heuristic = -100000000;
+    int best_heuristic = -10000000;
     for(int i = 0; i < n_valid_points; i++) {
         State next = cur;
         Point p = next_valid_points[i];
         next.flip_coins(p, player);
-        int h = alpha_beta_prune(next, 5, -10000000, 10000000,  3 - player);
+        int h = alpha_beta_prune(next, 5, -1000000, 1000000,  3 - player);
         if(h > best_heuristic) {
             best_heuristic = h;
             fout << p.x << " " << p.y << endl;
