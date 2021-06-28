@@ -22,7 +22,7 @@ int cal_ratio(const int& my, const int& oppo) {
 
 - Disc number : 
     - Count the total coins of both side, and then use the `cal_ratio` function.
-```cpp=
+```c++
 int my_coins = 0, oppo_coins = 0;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
