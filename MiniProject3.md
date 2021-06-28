@@ -220,7 +220,7 @@ edge_heuristic = 100 * cal_ratio(my_edge, oppo_edge);
 ----
 
 - Danger Zone
-    - Danger Zone is the spots next to corner, since if the corners have not been occupied by your disc but you occupied the spots next to corner , then it could easily be occupied by the opponent. Hence, we should check the danger zone and if it is stable.
+    - Danger Zone are the spots next to corner, since if the corners have not been occupied by your disc but you occupied the spots next to corner , then it could easily be occupied by the opponent. Hence, we should check the danger zone and if it is stable.
 
 ```cpp=
 int my_danger = 0, oppo_danger = 0;
@@ -259,7 +259,8 @@ edge_heuristic += 100 * cal_ratio(my_danger, oppo_danger);
 ---
 
 ### MiniMax 
-
+- Try to evaluate the heuristic in next few states, and return the heuristic at leaves, and then find the best way for now, the deeper the better.
+- But if test too far away from now , the possibility of state is too much to count its heuristic so it may cause invliad move if it failed to find any state.
 ```cpp=
 int miniMax(State node, int depth, int Player) {
     if(depth == 0) 
@@ -297,7 +298,7 @@ int miniMax(State node, int depth, int Player) {
 
 ### Alpha_Beta_pruning
 
-
+- Since MiniMax algorithm might consume too much time to find deeper, so use $\alpha$ - $\beta$ pruning to calculate more deeper.
 ```cpp=
 void write_valid_point(ofstream& fout) {
     State cur(board);
