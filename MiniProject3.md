@@ -259,7 +259,8 @@ edge_heuristic += 100 * cal_ratio(my_danger, oppo_danger);
 ---
 
 ### MiniMax 
-- Try to evaluate the heuristic in next few states, and return the heuristic at leaves, and then find the best way for now, the deeper the better.
+
+- Try to evaluate the heuristic in next few states,, and return the heuristic at leaves, and then find the best way for now, the deeper the better.
 - But if test too far away from now , the possibility of state is too much to count its heuristic so it may cause invliad move if it failed to find any state.
 ```cpp=
 int miniMax(State node, int depth, int Player) {
@@ -298,7 +299,9 @@ int miniMax(State node, int depth, int Player) {
 
 ### Alpha_Beta_pruning
 
-- Since MiniMax algorithm might consume too much time to find deeper, so use $\alpha$ - $\beta$ pruning to calculate more deeper.
+- Since MiniMax algorithm might consume too much time to find deeper, so use alpha - beta pruning to calculate more deeper.
+
+
 ```cpp=
 void write_valid_point(ofstream& fout) {
     State cur(board);
