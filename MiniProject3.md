@@ -255,11 +255,22 @@ int my_danger = 0, oppo_danger = 0;
         }
 edge_heuristic += 100 * cal_ratio(my_danger, oppo_danger);
 ```
+----
 
+- Then since the coin_heuristic should be more important in the end of the game (since if you have more, you win).
+- As for mobil_heuristic, it is more important in the begin of the game.
+- So the final heuristic I return also take round into account when considering the coin and mobility.
+```cpp=
+if(round >= 55) 
+            return coin_heuristic * 1000;
+else
+    return ((round * 10) * coin_heuristic + (60 - round) * 10 * mobil_heuristic + 5000 * corner_heuristic + 1500 * edge_heuristic);
+```
 ---
 
 ### MiniMax 
-- Try to evaluate the heuristic in next few states, and return the heuristic at leaves, and then find the best way for now, the deeper the better.
+
+- Try to evaluate the heuristic in next few states,, and return the heuristic at leaves, and then find the best way for now, the deeper the better.
 - But if test too far away from now , the possibility of state is too much to count its heuristic so it may cause invliad move if it failed to find any state.
 ```cpp=
 int miniMax(State node, int depth, int Player) {
@@ -298,7 +309,9 @@ int miniMax(State node, int depth, int Player) {
 
 ### Alpha_Beta_pruning
 
-- Since MiniMax algorithm might consume too much time to find deeper, so use $\alpha$ - $\beta$ pruning to calculate more deeper.
+- Since MiniMax algorithm might consume too much time to find deeper, so use alpha - beta pruning to calculate more deeper.
+
+
 ```cpp=
 void write_valid_point(ofstream& fout) {
     State cur(board);
@@ -317,10 +330,10 @@ void write_valid_point(ofstream& fout) {
     }
 }
 int alpha_beta_prune(State node, int depth, int alpha, int beta, int Player) {
+    vector<Point> valid_points = node.get_valid_points(Player);
     if(depth == 0) 
         return node.Cal_heuristic();
     if(Player == player) {
-        vector<Point> valid_points = node.get_valid_points(Player);
         int points_number = valid_points.size();
         for(int i = 0; i < points_number; i++) {
             State next = node;
@@ -333,7 +346,6 @@ int alpha_beta_prune(State node, int depth, int alpha, int beta, int Player) {
         return alpha;
     }
     else {
-        vector<Point> valid_points = node.get_valid_points(Player);
         int points_number = valid_points.size();
         for(int i = 0; i < points_number; i++) {
             State next = node;
