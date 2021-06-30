@@ -8,7 +8,7 @@
 - `cal_ratio` function:
     - I use a function to calculate every heuristic, which is :
     - $($myheuristic $-$ opponentheuristic)$/$ (myheuristic $+$ opponentheuristic$)$ $\times$ $100$.
-```cpp=
+```c++
 int cal_ratio(const int& my, const int& oppo) {
         if((my + oppo) != 0)
             return (my - oppo) / (my + oppo);
@@ -22,7 +22,7 @@ int cal_ratio(const int& my, const int& oppo) {
 
 - Disc number : 
     - Count the total coins of both side, and then use the `cal_ratio` function.
-```cpp=
+```c++
 int my_coins = 0, oppo_coins = 0;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
@@ -39,7 +39,7 @@ int my_coins = 0, oppo_coins = 0;
 
 - Mobility & Potential Mobility:
     - Mobility is the number of valid spots, I don't care which player is to play this round, I count the mobility for both side and then use `cal_ratio` funtcion.
-```cpp=
+```c++
 int my_mobil = 0, oppo_mobil = 0;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
@@ -73,7 +73,7 @@ bool is_point_valid(Point center, int who) const {
 - Potential Mobility:
     - Potential Mobility is the number of the spot which is empty might be occupied by the player in the next few rounds. In particular, if the spots which is empty is next to any of the opponent's disc , this spot is your **potential mibility**.
 
-```cpp=
+```c++
 int my_potential_mobil = 0, oppo_potential_mobil = 0;
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
@@ -103,7 +103,7 @@ mobil_heuristic = 100 * cal_ratio(my_mobil, oppo_mobil) + 100 * cal_ratio(my_pot
 
 - Corner:
     Corner is the place that can't be flipped , so the corner is important is this game. So I count the number of corner captured by each side and then use `cal_ratio`.
-```cpp=
+```c++
 const array<Point, 4> corner {{
     Point(0, 0), Point(0, 7),
     Point(7, 0), Point(7, 7)
@@ -126,7 +126,7 @@ corner_heuristic = 100 * cal_ratio(my_corner, oppo_corner);
     - But I just count the stability of discs on edge since it is more easy to tell which disc is stable on edge, and I avoid the corners, which have been counted above,  I also use `cal-ratio` function.
 
 
-```cpp=
+```c++
 bool is_point_stable(Point center, int who) {
         for(Point d : directions) {
             for(Point c : corner) {
@@ -222,7 +222,7 @@ edge_heuristic = 100 * cal_ratio(my_edge, oppo_edge);
 - Danger Zone
     - Danger Zone are the spots next to corner, since if the corners have not been occupied by your disc but you occupied the spots next to corner , then it could easily be occupied by the opponent. Hence, we should check the danger zone and if it is stable.
 
-```cpp=
+```c++
 int my_danger = 0, oppo_danger = 0;
         for(int i : {1, 6}) {
             for(int j : {1, 6}) {
@@ -269,7 +269,7 @@ return ((round * 15) * coin_heuristic + (60 - round) * 10 * mobil_heuristic + 45
 
 - Try to evaluate the heuristic in next few states,, and return the heuristic at leaves, and then find the best way for now, the deeper the better.
 - But if test too far away from now , the possibility of state is too much to count its heuristic so it may cause invliad move if it failed to find any state.
-```cpp=
+```c++
 int miniMax(State node, int depth, int Player) {
     if(depth == 0) 
         return node.Cal_heuristic();
@@ -309,7 +309,7 @@ int miniMax(State node, int depth, int Player) {
 - Since MiniMax algorithm might consume too much time to find deeper, so use alpha - beta pruning to calculate more deeper.
 
 
-```cpp=
+```c++
 void write_valid_point(ofstream& fout) {
     State cur(board);
     int n_valid_points = next_valid_points.size();
