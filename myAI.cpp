@@ -53,6 +53,7 @@ private:
     int edge_heuristic;
     int stable_heuristic;
     int round;
+    int round_left;
 public:
     State(): coin_heuristic{0}, mobil_heuristic{0}, corner_heuristic{0}, edge_heuristic{0},
              stable_heuristic{0}, round{0} {}
@@ -101,6 +102,16 @@ public:
                 return true;
         }
         return false;
+    }
+    int getround() {
+        round_left = 0;
+        for(int i = 0; i < SIZE; i++) {
+            for(int j = 0; j < SIZE; j++) {
+                if(Board[i][j] == 0) 
+                    round_left++;
+            }
+        }
+        return round_left;
     }
     vector<Point> get_valid_points(int who) const {
         vector<Point> valid_points;
@@ -284,7 +295,7 @@ public:
             }
         }
         edge_heuristic += 100 * cal_ratio(my_danger, oppo_danger);
-        return ((round * 10) * coin_heuristic + (60 - round) * 10 * mobil_heuristic + 4500 * corner_heuristic + 1500 * edge_heuristic);
+        return ((round * 15) * coin_heuristic + (60 - round) * 10 * mobil_heuristic + 4500 * corner_heuristic + 600 * edge_heuristic);
     }
     void flip_coins(Point center, int who) {
         for(Point d : directions) {
@@ -325,10 +336,10 @@ void read_valid_points(ifstream& fin) {
     }
 }
 int alpha_beta_prune(State node, int depth, int alpha, int beta, int Player) {
+    vector<Point> valid_points = node.get_valid_points(Player);
     if(depth == 0) 
         return node.Cal_heuristic();
     if(Player == player) {
-        vector<Point> valid_points = node.get_valid_points(Player);
         int points_number = valid_points.size();
         for(int i = 0; i < points_number; i++) {
             State next = node;
@@ -341,7 +352,6 @@ int alpha_beta_prune(State node, int depth, int alpha, int beta, int Player) {
         return alpha;
     }
     else {
-        vector<Point> valid_points = node.get_valid_points(Player);
         int points_number = valid_points.size();
         for(int i = 0; i < points_number; i++) {
             State next = node;
@@ -362,7 +372,11 @@ void write_valid_point(ofstream& fout) {
         State next = cur;
         Point p = next_valid_points[i];
         next.flip_coins(p, player);
-        int h = alpha_beta_prune(next, 5, -1000000, 1000000,  3 - player);
+        int h, round_left = next.getround();
+        if(round_left <= 10) 
+            h = alpha_beta_prune(next, round_left - 1, -1000000, 1000000,  3 - player);
+        else 
+            h = alpha_beta_prune(next, 5, -1000000, 1000000,  3 - player);
         if(h > best_heuristic) {
             best_heuristic = h;
             fout << p.x << " " << p.y << endl;
