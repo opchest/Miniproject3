@@ -7,7 +7,7 @@
 
 - `cal_ratio` function:
     - I use a function to calculate every heuristic, which is :
-    - $($myheuristic $-$ opponentheuristic)$/$ (myheuristic $+$ opponentheuristic$)$ $\times$ $100$.
+    - ($myheuristic - opponentheuristic) / (myheuristic + opponentheuristic$) * 100.
 ```c++
 int cal_ratio(const int& my, const int& oppo) {
         if((my + oppo) != 0)
