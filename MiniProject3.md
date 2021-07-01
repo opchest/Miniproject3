@@ -103,7 +103,7 @@ mobil_heuristic = 100 * cal_ratio(my_mobil, oppo_mobil) + 100 * cal_ratio(my_pot
 
 - Corner:
     Corner is the place that can't be flipped , so the corner is important is this game. So I count the number of corner captured by each side and then use `cal_ratio`.
-```cpp=
+```c++
 const array<Point, 4> corner {{
     Point(0, 0), Point(0, 7),
     Point(7, 0), Point(7, 7)
@@ -261,10 +261,7 @@ edge_heuristic += 100 * cal_ratio(my_danger, oppo_danger);
 - As for mobil_heuristic, it is more important in the begin of the game.
 - So the final heuristic I return also take round into account when considering the coin and mobility.
 ```c++
-if(round >= 55) 
-            return coin_heuristic * 1000;
-else
-    return ((round * 10) * coin_heuristic + (60 - round) * 10 * mobil_heuristic + 5000 * corner_heuristic + 1500 * edge_heuristic);
+return ((round * 15) * coin_heuristic + (60 - round) * 10 * mobil_heuristic + 4500 * corner_heuristic + 600 * edge_heuristic);
 ```
 ---
 
@@ -321,7 +318,11 @@ void write_valid_point(ofstream& fout) {
         State next = cur;
         Point p = next_valid_points[i];
         next.flip_coins(p, player);
-        int h = alpha_beta_prune(next, 5, -1000000, 1000000,  3 - player);
+        int h, round_left = next.getround();
+        if(round_left <= 10) 
+            h = alpha_beta_prune(next, round_left - 1, -1000000, 1000000,  3 - player);
+        else 
+            h = alpha_beta_prune(next, 5, -1000000, 1000000,  3 - player);
         if(h > best_heuristic) {
             best_heuristic = h;
             fout << p.x << " " << p.y << endl;
