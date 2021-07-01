@@ -260,7 +260,7 @@ edge_heuristic += 100 * cal_ratio(my_danger, oppo_danger);
 - Then since the coin_heuristic should be more important in the end of the game (since if you have more, you win).
 - As for mobil_heuristic, it is more important in the begin of the game.
 - So the final heuristic I return also take round into account when considering the coin and mobility.
-```cpp=
+```c++
 return ((round * 15) * coin_heuristic + (60 - round) * 10 * mobil_heuristic + 4500 * corner_heuristic + 600 * edge_heuristic);
 ```
 ---
